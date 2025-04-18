@@ -11,13 +11,40 @@ class ASRFeatExtractor:
     def __init__(self, kaldi_cmvn_file):
         self.cmvn = CMVN(kaldi_cmvn_file) if kaldi_cmvn_file != "" else None
         self.fbank = KaldifeatFbank(num_mel_bins=80, frame_length=25,
-            frame_shift=10, dither=0.0)
+                                    frame_shift=10, dither=0.0)
 
     def __call__(self, wav_paths):
         feats = []
         durs = []
         for wav_path in wav_paths:
             sample_rate, wav_np = kaldiio.load_mat(wav_path)
+            dur = wav_np.shape[0] / sample_rate
+            fbank = self.fbank((sample_rate, wav_np))
+            if self.cmvn is not None:
+                fbank = self.cmvn(fbank)
+            fbank = torch.from_numpy(fbank).float()
+            feats.append(fbank)
+            durs.append(dur)
+        lengths = torch.tensor([feat.size(0) for feat in feats]).long()
+        feats_pad = self.pad_feat(feats, 0.0)
+        return feats_pad, lengths, durs
+
+    def extract_from_tensor(self, batch_audio_tensor, sample_rate):
+        """从音频tensor直接提取特征
+
+        Args:
+            batch_audio_tensor: [batch_size, audio_length] 批量音频波形
+            sample_rate: 采样率
+
+        Returns:
+            feats_pad: 填充后的特征 [batch_size, max_len, feature_dim]
+            lengths: 特征长度 [batch_size]
+            durs: 音频时长列表
+        """
+        feats = []
+        durs = []
+        for wav_tensor in batch_audio_tensor:
+            wav_np = wav_tensor.cpu().numpy()
             dur = wav_np.shape[0] / sample_rate
             fbank = self.fbank((sample_rate, wav_np))
             if self.cmvn is not None:
@@ -37,8 +64,6 @@ class ASRFeatExtractor:
         for i in range(n_batch):
             pad[i, :xs[i].size(0)] = xs[i]
         return pad
-
-
 
 
 class CMVN:
@@ -71,7 +96,6 @@ class CMVN:
             istd = 1.0 / math.sqrt(varience)
             inverse_std_variences.append(istd)
         return dim, np.array(means), np.array(inverse_std_variences)
-
 
 
 class KaldifeatFbank:
