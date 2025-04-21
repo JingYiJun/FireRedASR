@@ -3,8 +3,6 @@
 <br>
 Automatic Speech Recognition Models</h1>
 
-[Kai-Tuo Xu](https://github.com/kaituoxu) · [Feng-Long Xie](https://scholar.google.com/citations?user=bi8ExI4AAAAJ&hl=zh-CN&oi=sra) · [Xu Tang](https://scholar.google.com/citations?user=grP24aAAAAAJ&hl=zh-CN&oi=sra) · [Yao Hu](https://scholar.google.com/citations?user=LIu7k7wAAAAJ&hl=zh-CN)
-
 </div>
 
 [[Paper]](https://arxiv.org/pdf/2501.14350)
